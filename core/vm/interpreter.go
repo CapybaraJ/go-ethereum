@@ -204,9 +204,12 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		// enough stack items available to perform the operation.
 		op = contract.GetOp(pc)
 		operation := in.cfg.JumpTable[op]
+		fmt.Printf("In atomic the op: %v(%v) || the stack is: %X\n", op, pc, stack.data)
+
 		if !operation.valid {
 			return nil, fmt.Errorf("invalid opcode 0x%x", int(op))
 		}
+
 		// Validate stack
 		if sLen := stack.len(); sLen < operation.minStack {
 			return nil, fmt.Errorf("stack underflow (%d <=> %d)", sLen, operation.minStack)

@@ -18,6 +18,7 @@ package vm
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -39,8 +40,9 @@ var (
 
 func opAdd(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	x, y := stack.pop(), stack.peek()
+	fmt.Print("Adding:", x, y)
 	math.U256(y.Add(x, y))
-
+	fmt.Println(" Result: ", y)
 	interpreter.intPool.put(x)
 	return nil, nil
 }
