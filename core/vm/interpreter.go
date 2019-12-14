@@ -204,7 +204,11 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		// enough stack items available to perform the operation.
 		op = contract.GetOp(pc)
 		operation := in.cfg.JumpTable[op]
+		//Add RASP here
+
 		fmt.Printf("In atomic the op: %v(%v) || the stack is: %X\n", op, pc, stack.data)
+		//fmt.Printf("In atomic the op: %v(%v) || the stack is: %X || the tag is: %v \n", op, pc, stack.data, StackTags)
+		InRASP(pc, op, contract, input, stack, mem)
 
 		if !operation.valid {
 			return nil, fmt.Errorf("invalid opcode 0x%x", int(op))
