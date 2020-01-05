@@ -208,8 +208,11 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 
 		fmt.Printf("In atomic the op: %v(%v) || the stack is: %X\n", op, pc, stack.data)
 		//fmt.Printf("In atomic the op: %v(%v) || the stack is: %X || the tag is: %v \n", op, pc, stack.data, StackTags)
-		InRASP(pc, op, contract, input, stack, mem)
-
+		//result := InRASP(pc, op, contract, input, stack, mem)
+		//
+		//if !result{
+		//	return nil, fmt.Errorf("invalid calulating", result)
+		//}
 		if !operation.valid {
 			return nil, fmt.Errorf("invalid opcode 0x%x", int(op))
 		}

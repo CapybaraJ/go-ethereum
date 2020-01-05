@@ -49,16 +49,18 @@ func opAdd(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *
 
 func opSub(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	x, y := stack.pop(), stack.peek()
+	fmt.Print("Subing:", x, y)
 	math.U256(y.Sub(x, y))
-
+	fmt.Println(" Result: ", y)
 	interpreter.intPool.put(x)
 	return nil, nil
 }
 
 func opMul(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	x, y := stack.pop(), stack.pop()
+	fmt.Print("*:", x, y)
 	stack.push(math.U256(x.Mul(x, y)))
-
+	fmt.Println(" Result: ", x)
 	interpreter.intPool.put(y)
 
 	return nil, nil
@@ -66,11 +68,13 @@ func opMul(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *
 
 func opDiv(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	x, y := stack.pop(), stack.peek()
+	fmt.Print("diving:", x, y)
 	if y.Sign() != 0 {
 		math.U256(y.Div(x, y))
 	} else {
 		y.SetUint64(0)
 	}
+	fmt.Println(" Result: ", y)
 	interpreter.intPool.put(x)
 	return nil, nil
 }

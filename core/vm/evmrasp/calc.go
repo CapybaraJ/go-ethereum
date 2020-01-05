@@ -35,13 +35,10 @@ func (FFs) check(val *big.Int, left int, right int) int {
 	switch allFF[mid].Cmp(val) {
 	case 1:
 		return allFF.check(val, left, mid)
-		break
 	case -1:
 		return allFF.check(val, mid+1, right)
-		break
 	case 0:
 		return mid
-		break
 	}
 	return -1
 }
@@ -52,8 +49,7 @@ func HookAdd(a *big.Int, b *big.Int, len int) bool {
 	c.Add(a, b)
 	fmt.Println("CMP1: ", c, MyMaxBig256)
 	if c.Cmp(MyMaxBig256) == 1 {
-		//上溢出
-		fmt.Println("上溢出")
+		fmt.Println("上溢出") //上溢出
 		return false
 	}
 	return true
@@ -70,6 +66,30 @@ func HookAnd(a *big.Int, b *big.Int) bool {
 			fmt.Println("AND 上溢出", b, a)
 			return false
 		}
+	}
+	return true
+}
+
+func HookSub(a *big.Int, b *big.Int, len int) bool {
+	fmt.Println("CMP2: ", a, b)
+	if b.Cmp(a) == 1 {
+		fmt.Println("下溢出") //上溢出
+		return false
+	}
+	return true
+}
+
+func HookMul(a *big.Int, b *big.Int, len int) bool {
+	c := big.NewInt(int64(0))
+	d := big.NewInt(int64(1))
+	if a.Cmp(c) == 0 || b.Cmp(c) == 0 || a.Cmp(d) == 0 || b.Cmp(d) == 0 {
+		return true
+	}
+	c.Mul(a, b)
+	fmt.Println("CMP3: ", c)
+	if c.Cmp(MyMaxBig256) == 1 {
+		fmt.Println("上溢出") //上溢出
+		return false
 	}
 	return true
 }

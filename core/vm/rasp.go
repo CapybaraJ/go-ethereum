@@ -13,21 +13,24 @@ func init() {
 	StorageTags = make(RaspTag64)
 }
 
-func InRASP(pc uint64, op OpCode, contract *Contract, input []byte, st *Stack, mem *Memory) {
+func InRASP(pc uint64, op OpCode, contract *Contract, input []byte, st *Stack, mem *Memory) bool {
 	//fmt.Printf("REVERT!!!!: %v(%v) || the stack is: %X\n", op, pc, stack.data)
+	result := true
 	switch op {
-	case ADD, AND:
+	case ADD, SUB, MUL, DIV, AND:
 		if StackTags.check(st.len()) || StackTags.check(st.len()-1) {
 			fmt.Println("effective Caculate")
-			HookCalc(pc, op, contract, input, st)
+			result = HookCalc(pc, op, contract, input, st)
 			StackTags.delete(st.len())
+			StackTags.push(st.len()-1, CalcTag)
 		}
 		break
-	case MUL, SUB, DIV, SDIV, MOD, SMOD, ADDMOD, MULMOD, EXP, SIGNEXTEND:
+	case SDIV, MOD, SMOD, ADDMOD, MULMOD, EXP, SIGNEXTEND:
 		break
 	default:
 		HookVar(op, contract, input, st)
 	}
+	return result
 }
 
 //
