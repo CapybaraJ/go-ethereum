@@ -1,24 +1,24 @@
 package vm
 
 import (
-	"github.com/ethereum/go-ethereum/core/vm/evmrasp"
+	"github.com/ethereum/go-ethereum/core/vm/eser"
 )
 
-func HookCalc(pc uint64, op OpCode, contract *Contract, input []byte, st *Stack) bool {
-	result := true
+func HookCalc(pc uint64, op OpCode, contract *Contract, input []byte, st *Stack) eser.ErrorType {
+	result := eser.NoError
 	switch op {
 	case ADD:
-		result = evmrasp.HookAdd(st.peek(), st.Back(1), st.len())
+		result = eser.HookAdd(st.peek(), st.Back(1), st.len())
 		break
 	case SUB:
-		result = evmrasp.HookSub(st.peek(), st.Back(1), st.len())
+		result = eser.HookSub(st.peek(), st.Back(1), st.len())
 		break
 	case MUL:
-		result = evmrasp.HookMul(st.peek(), st.Back(1), st.len())
+		result = eser.HookMul(st.peek(), st.Back(1), st.len())
 		break
 	case AND:
 		if StackTags.check(st.len()-1) && StackTags[st.len()-1] == CalcTag {
-			if evmrasp.HookAnd(st.peek(), st.Back(1)) {
+			if eser.HookAnd(st.peek(), st.Back(1)) == eser.NoError {
 				StackTags[st.len()-1] = DataTag
 			}
 		}

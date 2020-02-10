@@ -17,8 +17,11 @@
 package vm
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/ethereum/go-ethereum/core/vm/eser"
 	"hash"
+	"math/big"
 	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -190,6 +193,22 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			}
 		}()
 	}
+
+	addr := contract.Address().Bytes()
+	datasize := int64(len(contract.Input))
+	var funcName []byte
+	if datasize < int64(4) {
+		funcName = []byte("00000000")
+	} else {
+		funcName = getDataBig(contract.Input, big.NewInt(0), big32)[0:4]
+	}
+	fmt.Printf("recording the addr & func: %x, %x", addr, funcName)
+	var buffer bytes.Buffer
+	buffer.Write(addr)
+	buffer.Write(funcName)
+	recodes := buffer.Bytes()
+	eser.CallChain.Append(eser.NewINode(recodes, nil))
+
 	// The Interpreter main run loop (contextual). This loop runs until either an
 	// explicit STOP, RETURN or SELFDESTRUCT is executed, an error occurred during
 	// the execution of one of the operations or until the done flag is set by the
@@ -204,18 +223,6 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		// enough stack items available to perform the operation.
 		op = contract.GetOp(pc)
 		operation := in.cfg.JumpTable[op]
-		//Add RASP here
-
-		fmt.Printf("In atomic the op: %v(%v) || the stack is: %X\n", op, pc, stack.data)
-		//fmt.Printf("In atomic the op: %v(%v) || the stack is: %X || the tag is: %v \n", op, pc, stack.data, StackTags)
-		//result := InRASP(pc, op, contract, input, stack, mem)
-		//
-		//if !result{
-		//	return nil, fmt.Errorf("invalid calulating", result)
-		//}
-		if !operation.valid {
-			return nil, fmt.Errorf("invalid opcode 0x%x", int(op))
-		}
 
 		// Validate stack
 		if sLen := stack.len(); sLen < operation.minStack {
@@ -276,6 +283,24 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			logged = true
 		}
 
+		//Add RASP here
+
+		//fmt.Printf("In atomic the op: %v(%v) || the stack is: %X\n", op, pc, stack.data)
+		//fmt.Printf("In atomic the op: %v(%v) || the stack is: %X || the tag is: %v \n", op, pc, stack.data, StackTags)
+		result := InRASP(pc, op, contract, input, stack, mem)
+		//
+		if result == eser.CalcError {
+			return nil, fmt.Errorf("invalid calulating %v", result)
+		}
+
+		if result == eser.ReentryError {
+			fmt.Printf("amm I Rigth????")
+			return nil, fmt.Errorf("invalid call %v", result)
+		}
+		if !operation.valid {
+			return nil, fmt.Errorf("invalid opcode 0x%x", int(op))
+		}
+
 		// execute the operation
 		res, err = operation.execute(&pc, in, contract, mem, stack)
 		// verifyPool is a build flag. Pool verification makes sure the integrity
@@ -299,6 +324,8 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		case !operation.jumps:
 			pc++
 		}
+
+		// unlock call locker
 	}
 	return nil, nil
 }

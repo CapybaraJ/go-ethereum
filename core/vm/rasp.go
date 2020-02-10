@@ -1,6 +1,9 @@
 package vm
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/ethereum/go-ethereum/core/vm/eser"
+)
 
 var hookstate = 0
 var StackTags RaspTag
@@ -13,9 +16,9 @@ func init() {
 	StorageTags = make(RaspTag64)
 }
 
-func InRASP(pc uint64, op OpCode, contract *Contract, input []byte, st *Stack, mem *Memory) bool {
+func InRASP(pc uint64, op OpCode, contract *Contract, input []byte, st *Stack, mem *Memory) eser.ErrorType {
 	//fmt.Printf("REVERT!!!!: %v(%v) || the stack is: %X\n", op, pc, stack.data)
-	result := true
+	result := eser.NoError
 	switch op {
 	case ADD, SUB, MUL, DIV, AND:
 		if StackTags.check(st.len()) || StackTags.check(st.len()-1) {
@@ -27,6 +30,11 @@ func InRASP(pc uint64, op OpCode, contract *Contract, input []byte, st *Stack, m
 		break
 	case SDIV, MOD, SMOD, ADDMOD, MULMOD, EXP, SIGNEXTEND:
 		break
+	case CALL:
+		fmt.Printf("commmmmm to see reentry:")
+		eser.CallChain.PrintList()
+		return eser.ReentryCheck()
+
 	default:
 		HookVar(op, contract, input, st)
 	}
@@ -150,7 +158,7 @@ func HookVar(op OpCode, contract *Contract, input []byte, st *Stack) {
 		for i := 0; i <= 2; i++ {
 			StackTags.delete(st.len() - i)
 		}
-	case CALL, CALLCODE:
+	case CALLCODE:
 		for i := 0; i <= 6; i++ {
 			StackTags.delete(st.len() - i)
 		}

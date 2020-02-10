@@ -18,7 +18,6 @@ package vm
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -40,27 +39,27 @@ var (
 
 func opAdd(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	x, y := stack.pop(), stack.peek()
-	fmt.Print("Adding:", x, y)
+	//fmt.Print("Adding:", x, y)
 	math.U256(y.Add(x, y))
-	fmt.Println(" Result: ", y)
+	//fmt.Println(" Result: ", y)
 	interpreter.intPool.put(x)
 	return nil, nil
 }
 
 func opSub(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	x, y := stack.pop(), stack.peek()
-	fmt.Print("Subing:", x, y)
+	//fmt.Print("Subing:", x, y)
 	math.U256(y.Sub(x, y))
-	fmt.Println(" Result: ", y)
+	//fmt.Println(" Result: ", y)
 	interpreter.intPool.put(x)
 	return nil, nil
 }
 
 func opMul(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	x, y := stack.pop(), stack.pop()
-	fmt.Print("*:", x, y)
+	//fmt.Print("*:", x, y)
 	stack.push(math.U256(x.Mul(x, y)))
-	fmt.Println(" Result: ", x)
+	//fmt.Println(" Result: ", x)
 	interpreter.intPool.put(y)
 
 	return nil, nil
@@ -68,13 +67,13 @@ func opMul(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *
 
 func opDiv(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	x, y := stack.pop(), stack.peek()
-	fmt.Print("diving:", x, y)
+	//fmt.Print("diving:", x, y)
 	if y.Sign() != 0 {
 		math.U256(y.Div(x, y))
 	} else {
 		y.SetUint64(0)
 	}
-	fmt.Println(" Result: ", y)
+	//fmt.Println(" Result: ", y)
 	interpreter.intPool.put(x)
 	return nil, nil
 }

@@ -1,4 +1,4 @@
-package evmrasp
+package eser
 
 import (
 	"bytes"
@@ -44,18 +44,18 @@ func (FFs) check(val *big.Int, left int, right int) int {
 }
 
 //
-func HookAdd(a *big.Int, b *big.Int, len int) bool {
+func HookAdd(a *big.Int, b *big.Int, len int) ErrorType {
 	c := big.NewInt(int64(0))
 	c.Add(a, b)
 	fmt.Println("CMP1: ", c, MyMaxBig256)
 	if c.Cmp(MyMaxBig256) == 1 {
 		fmt.Println("上溢出") //上溢出
-		return false
+		return CalcError
 	}
-	return true
+	return NoError
 }
 
-func HookAnd(a *big.Int, b *big.Int) bool {
+func HookAnd(a *big.Int, b *big.Int) ErrorType {
 	loc := allFF.check(a, 0, 31)
 	fmt.Print("loc:", loc)
 	if loc != -1 {
@@ -64,32 +64,32 @@ func HookAnd(a *big.Int, b *big.Int) bool {
 		if b.Cmp(allFF[loc]) == 1 {
 			// 超过限制，上溢出
 			fmt.Println("AND 上溢出", b, a)
-			return false
+			return CalcError
 		}
 	}
-	return true
+	return NoError
 }
 
-func HookSub(a *big.Int, b *big.Int, len int) bool {
+func HookSub(a *big.Int, b *big.Int, len int) ErrorType {
 	fmt.Println("CMP2: ", a, b)
 	if b.Cmp(a) == 1 {
 		fmt.Println("下溢出") //上溢出
-		return false
+		return CalcError
 	}
-	return true
+	return NoError
 }
 
-func HookMul(a *big.Int, b *big.Int, len int) bool {
+func HookMul(a *big.Int, b *big.Int, len int) ErrorType {
 	c := big.NewInt(int64(0))
 	d := big.NewInt(int64(1))
 	if a.Cmp(c) == 0 || b.Cmp(c) == 0 || a.Cmp(d) == 0 || b.Cmp(d) == 0 {
-		return true
+		return NoError
 	}
 	c.Mul(a, b)
 	fmt.Println("CMP3: ", c)
 	if c.Cmp(MyMaxBig256) == 1 {
 		fmt.Println("上溢出") //上溢出
-		return false
+		return CalcError
 	}
-	return true
+	return NoError
 }
