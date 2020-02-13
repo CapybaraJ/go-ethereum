@@ -17,12 +17,12 @@
 package vm
 
 import (
-	"github.com/ethereum/go-ethereum/core/vm/eser"
 	"math/big"
 	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm/eser"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 )
@@ -164,7 +164,7 @@ func NewEVM(ctx Context, statedb StateDB, chainConfig *params.ChainConfig, vmCon
 	evm.interpreters = append(evm.interpreters, NewEVMInterpreter(evm, vmConfig))
 	evm.interpreter = evm.interpreters[0]
 
-	eser.CallChain.Clear()
+	eser.CallRecords = make(eser.CallData)
 	return evm
 }
 

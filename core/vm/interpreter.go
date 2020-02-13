@@ -17,11 +17,9 @@
 package vm
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/vm/eser"
 	"hash"
-	"math/big"
 	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -194,21 +192,6 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}()
 	}
 
-	addr := contract.Address().Bytes()
-	datasize := int64(len(contract.Input))
-	var funcName []byte
-	if datasize < int64(4) {
-		funcName = []byte("00000000")
-	} else {
-		funcName = getDataBig(contract.Input, big.NewInt(0), big32)[0:4]
-	}
-	fmt.Printf("recording the addr & func: %x, %x", addr, funcName)
-	var buffer bytes.Buffer
-	buffer.Write(addr)
-	buffer.Write(funcName)
-	recodes := buffer.Bytes()
-	eser.CallChain.Append(eser.NewINode(recodes, nil))
-
 	// The Interpreter main run loop (contextual). This loop runs until either an
 	// explicit STOP, RETURN or SELFDESTRUCT is executed, an error occurred during
 	// the execution of one of the operations or until the done flag is set by the
@@ -284,9 +267,12 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}
 
 		//Add RASP here
-
-		//fmt.Printf("In atomic the op: %v(%v) || the stack is: %X\n", op, pc, stack.data)
+		fmt.Printf("In atomic the op: %v(%x) || the stack is: %X\n", op, pc, stack.data)
 		//fmt.Printf("In atomic the op: %v(%v) || the stack is: %X || the tag is: %v \n", op, pc, stack.data, StackTags)
+		var records string
+		if op == CALL {
+			records = getCallInfo(contract, pc, stack)
+		}
 		result := InRASP(pc, op, contract, input, stack, mem)
 		//
 		if result == eser.CalcError {
@@ -294,7 +280,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}
 
 		if result == eser.ReentryError {
-			fmt.Printf("amm I Rigth????")
+			fmt.Println("amm I Rigth????")
 			return nil, fmt.Errorf("invalid call %v", result)
 		}
 		if !operation.valid {
@@ -325,7 +311,11 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			pc++
 		}
 
-		// unlock call locker
+		if op == CALL && len(records) > 0 {
+			// unlock call locker
+			fmt.Println("unlock call locker")
+			eser.CallRecords.Push(records, false)
+		}
 	}
 	return nil, nil
 }

@@ -1,8 +1,12 @@
 package vm
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/vm/eser"
+	"math/big"
+	"strconv"
 )
 
 var hookstate = 0
@@ -20,20 +24,18 @@ func InRASP(pc uint64, op OpCode, contract *Contract, input []byte, st *Stack, m
 	//fmt.Printf("REVERT!!!!: %v(%v) || the stack is: %X\n", op, pc, stack.data)
 	result := eser.NoError
 	switch op {
-	case ADD, SUB, MUL, DIV, AND:
-		if StackTags.check(st.len()) || StackTags.check(st.len()-1) {
-			fmt.Println("effective Caculate")
-			result = HookCalc(pc, op, contract, input, st)
-			StackTags.delete(st.len())
-			StackTags.push(st.len()-1, CalcTag)
-		}
-		break
-	case SDIV, MOD, SMOD, ADDMOD, MULMOD, EXP, SIGNEXTEND:
-		break
+	//case ADD, SUB, MUL, DIV, AND:
+	//	if StackTags.check(st.len()) || StackTags.check(st.len()-1) {
+	//		fmt.Println("effective Caculate")
+	//		result = HookCalc(pc, op, contract, input, st)
+	//		StackTags.delete(st.len())
+	//		StackTags.push(st.len()-1, CalcTag)
+	//	}
+	//	break
+	//case SDIV, MOD, SMOD, ADDMOD, MULMOD, EXP, SIGNEXTEND:
+	//	break
 	case CALL:
-		fmt.Printf("commmmmm to see reentry:")
-		eser.CallChain.PrintList()
-		return eser.ReentryCheck()
+		return CheckCall(contract, pc, st)
 
 	default:
 		HookVar(op, contract, input, st)
@@ -179,4 +181,41 @@ func HookVar(op OpCode, contract *Contract, input []byte, st *Stack) {
 	default:
 		break
 	}
+}
+
+// 检查CALL是否被锁住
+func CheckCall(contract *Contract, pc uint64, st *Stack) eser.ErrorType {
+	records := getCallInfo(contract, pc, st)
+	if len(records) > 0 {
+		if eser.CallRecords.CheckValue(records) {
+			eser.CallRecords.Print()
+			return eser.ReentryError
+		}
+		fmt.Println("locking this call: %v", records)
+		eser.CallRecords.Push(records, true)
+	}
+	return eser.NoError
+}
+
+// 得到call infomation
+func getCallInfo(contract *Contract, pc uint64, st *Stack) string {
+	value := st.Back(2)
+	cmp0 := big.NewInt(int64(0))
+	if value.Cmp(cmp0) == 0 {
+		return ""
+	}
+	addr := contract.Address().Bytes()
+	datasize := int64(len(contract.Input))
+	var funcName []byte
+	if datasize < int64(4) {
+		funcName = []byte("00000000")
+	} else {
+		funcName = getDataBig(contract.Input, big.NewInt(0), big32)[0:4]
+	}
+	fmt.Printf("getting the addr & func & pc: %x, %x, %x\n", addr, funcName, pc)
+	var buffer bytes.Buffer
+	buffer.Write(addr)
+	buffer.Write(funcName)
+	records := hex.EncodeToString(buffer.Bytes()) + strconv.FormatUint(pc, 16)
+	return records
 }
